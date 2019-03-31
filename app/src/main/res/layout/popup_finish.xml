@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <android.support.v7.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:elevation="80dp"
+        app:cardCornerRadius="20dp"
+        android:background="@color/light"
+        android:layout_margin="40dp"
+        android:layout_centerVertical="true"
+        >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="440dp"
+            android:orientation="vertical"
+            android:layout_gravity="center_vertical"
+            >
+
+            <ImageView
+                android:layout_width="800px"
+                android:layout_height="600px"
+                android:src="@drawable/finish"
+                android:layout_gravity="center_horizontal"/>
+
+            <LinearLayout
+                android:layout_width="780px"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_gravity="center_horizontal"
+
+                >
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/finish"
+                    android:textSize="80px"
+                    android:textColor="@color/colorPrimaryDark"
+                    android:textAlignment="center"
+                    />
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="5dp">
+
+                    <TextView
+                        android:layout_width="100dp"
+                        android:layout_height="wrap_content"
+                        android:text="FOOD MARKET"
+                        android:textSize="60px"
+                        android:textStyle="bold"
+                        android:textColor="@color/colorPrimaryDark"
+                        android:id="@+id/poi_name_from"
+                        android:layout_alignParentLeft="true"/>
+
+                    <LinearLayout
+                        android:layout_width="96dp"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_centerHorizontal="true">
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="13.6 min"
+                            android:textColor="@color/colorPrimaryDark"
+                            android:textAlignment="center"
+                            android:id="@+id/popup_duration"
+                            />
+
+
+                        <ImageView
+                            android:layout_width="match_parent"
+                            android:layout_height="40dp"
+                            android:src="@drawable/arrow2"
+                            android:scaleType="centerCrop"/>
+
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:layout_width="100dp"
+                        android:layout_height="wrap_content"
+                        android:text="FOOD MARKET"
+                        android:textSize="60px"
+                        android:textStyle="bold"
+                        android:textColor="@color/colorPrimaryDark"
+                        android:layout_alignParentRight="true"
+                        android:id="@+id/poi_name_to" />
+
+                </RelativeLayout>
+
+
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/finish_sub"
+                    android:textSize="20dp"
+                    android:textColor="@color/colorPrimaryDark"
+                    android:textAlignment="center"
+                    />
+
+            </LinearLayout>
+
+            <Button
+                android:layout_width="220dp"
+                android:layout_height="45dp"
+                android:text="Start"
+                android:textColor="@color/light"
+                android:textSize="80px"
+                android:fontFamily="sans-serif"
+                android:background="@drawable/btn_start_shape"
+                android:layout_below="@+id/info"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="10dp"
+                android:id="@+id/btn_restart"
+                android:layout_gravity="center_horizontal"
+                />
+
+        </LinearLayout>
+
+    </android.support.v7.widget.CardView>
+
+</RelativeLayout>

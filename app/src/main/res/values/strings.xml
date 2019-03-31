@@ -1,0 +1,12 @@
+<resources>
+    <string name="app_name">FitnessOnCampusUI</string>
+    <string name="title">Fitness
+        on Campus</string>
+    <string name="empty">Sorry, there is currently no track. How about starting a new one now!</string>
+    <string name="ready">Ready to Go!</string>
+    <string name="ready_sub">"Do you want to start with this POI as origin? Click on the START button."</string>
+    <string name="notfound">Not in Buffer</string>
+    <string name="notfound_sub">You are not in the buffer of any POIs. Please follow the direction to </string>
+    <string name="finish">End Tracking!</string>
+    <string name="finish_sub">Start a new track from here?</string>
+</resources>
