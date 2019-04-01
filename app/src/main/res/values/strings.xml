@@ -9,4 +9,6 @@
     <string name="notfound_sub">You are not in the buffer of any POIs. Please follow the direction to </string>
     <string name="finish">End Tracking!</string>
     <string name="finish_sub">Start a new track from here?</string>
+    <string name="leaving">Leaving POI</string>
+    <string name="leaving_sub">You are leaving the current POI. Make up your mind not to start with this origin?</string>
 </resources>

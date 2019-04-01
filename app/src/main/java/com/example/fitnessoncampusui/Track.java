@@ -7,7 +7,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.sql.Timestamp;
+import java.util.Date;
 
 public class Track {
 
@@ -15,10 +15,10 @@ public class Track {
     private int track_id;
     private POI startPOI;
     private POI endPOI;
-    private Timestamp startTime;
-    private Timestamp endTime;
+    private Date startTime;
+    private Date endTime;
 
-    public Track(int user_id, int track_id, POI startPOI, POI endPOI, Timestamp startTime, Timestamp endTime) {
+    public Track(int user_id, int track_id, POI startPOI, POI endPOI, Date startTime, Date endTime) {
         this.user_id = user_id;
         this.track_id = track_id;
         this.startPOI = startPOI;
@@ -47,11 +47,11 @@ public class Track {
         return endPOI;
     }
 
-    public Timestamp getStartTime() {
+    public Date getStartTime() {
         return startTime;
     }
 
-    public Timestamp getEndTime() {
+    public Date getEndTime() {
         return endTime;
     }
 
@@ -71,11 +71,11 @@ public class Track {
         this.endPOI = endPOI;
     }
 
-    public void setStartTime(Timestamp startTime) {
+    public void setStartTime(Date startTime) {
         this.startTime = startTime;
     }
 
-    public void setEndTime(Timestamp endTime) {
+    public void setEndTime(Date endTime) {
         this.endTime = endTime;
     }
 

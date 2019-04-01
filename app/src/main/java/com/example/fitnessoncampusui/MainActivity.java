@@ -66,9 +66,6 @@ public class MainActivity extends AppCompatActivity {
         startBtn.startAnimation(bottomUp);
         //title.animate().translationY(40).alpha(1).setDuration(800).setStartDelay(2000);
 
-        // Load and show previous tracks
-        showTrack();
-
         // TODO Button action
         startBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -86,6 +83,8 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d(TAG, "onStart: started");
 
+        // Load and show previous tracks
+        showTrack();
 
     }
 
@@ -95,6 +94,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 String line = "";
                 File directory = Environment.getExternalStorageDirectory();
+                Log.d(TAG, "loadTracks: filepath = "+directory.getPath());
                 File file = new File(directory, TRACK_FILENAME);
 
                 if (file.exists()) {
@@ -129,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "checkWritePermission: starts");
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},2);
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1);
             return false;
         } else {
             Log.d(TAG, "checkWritePermission: permission granted");

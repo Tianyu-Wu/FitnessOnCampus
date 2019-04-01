@@ -1,17 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    >
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <android.support.v7.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:elevation="80dp"
         app:cardCornerRadius="20dp"
-        android:background="@color/lightBlue"
         android:layout_centerVertical="true"
         >
 
@@ -20,13 +17,13 @@
             android:layout_height="440dp"
             android:orientation="vertical"
             android:layout_gravity="center_vertical"
-
+            android:background="@drawable/popup_bg_lv"
             >
 
             <ImageView
                 android:layout_width="800px"
                 android:layout_height="600px"
-                android:src="@drawable/ready"
+                android:src="@drawable/leaving"
                 android:layout_marginTop="15dp"
                 android:layout_gravity="center_horizontal"/>
 
@@ -42,9 +39,9 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/ready"
+                    android:text="@string/leaving"
                     android:textSize="80px"
-                    android:textColor="@color/darkBrown"
+                    android:textColor="@color/darkGray"
                     android:textAlignment="center"
                     />
 
@@ -54,25 +51,23 @@
                     android:text="POI Name"
                     android:textSize="80px"
                     android:textStyle="bold"
-                    android:textColor="@color/darkBrown"
+                    android:textColor="@color/darkGray"
                     android:textAlignment="center"
-                    android:id="@+id/poi_name_rd"/>
+                    android:id="@+id/poi_name_lv"/>
 
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="@string/ready_sub"
+                    android:text="@string/leaving_sub"
                     android:textSize="20dp"
-                    android:textColor="@color/darkBrown"
+                    android:textColor="@color/darkGray"
                     android:textAlignment="center"/>
+
 
             </LinearLayout>
 
         </LinearLayout>
 
     </android.support.v7.widget.CardView>
-
-
-
 
 </RelativeLayout>
