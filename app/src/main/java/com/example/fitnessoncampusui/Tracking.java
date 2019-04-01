@@ -101,7 +101,6 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
         // initiailze variables
         back = (LinearLayout) findViewById(R.id.back);
         trackBtn = (Button) findViewById(R.id.btn_track);
-        trackBtn.setEnabled(false);
         compass = (ImageView) findViewById(R.id.compass_bg2);
         arrow = (ImageView) findViewById(R.id.compass_arrow);
         tvName = (TextView) findViewById(R.id.poi_name);
@@ -123,6 +122,7 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
             public void onClick(View v) {
                 Intent i = new Intent(Tracking.this, MainActivity.class);
                 startActivity(i);
+                overridePendingTransition(R.anim.slide_back_out, R.anim.slide_back_in);
             }
         });
 

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".SplashScreen">
+    <ImageView
+        android:id="@+id/background"
+        android:layout_width="1080px"
+        android:layout_height="2350px"
+        android:scaleType="fitXY"
+        android:src="@drawable/backgroung"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+    <LinearLayout
+        android:id="@+id/welcome_contents"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <ImageView
+            android:id="@+id/welcome_img"
+            android:layout_width="match_parent"
+            android:layout_height="990px"
+            android:layout_marginTop="40dp"
+            android:src="@drawable/welcome" />
+
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="573px"
+            android:src="@drawable/title" />
+
+    </LinearLayout>
+
+</android.support.constraint.ConstraintLayout>

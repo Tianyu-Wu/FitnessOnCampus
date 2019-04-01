@@ -2,8 +2,10 @@ package com.example.fitnessoncampusui;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -31,10 +33,8 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    ImageView background;
-    LinearLayout welcome_contents;
     TextView title;
-    Animation bottomUp, topDown;
+    Animation topDown, bottomUp;
     Button startBtn;
     RelativeLayout emptyLayout;
 
@@ -48,30 +48,28 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        
-        Log.d(TAG, "onCreate: started");
 
-        background = (ImageView) findViewById(R.id.background);
-        welcome_contents = (LinearLayout) findViewById(R.id.welcome_contents);
         title = (TextView) findViewById(R.id.title);
         startBtn = (Button) findViewById(R.id.btn_start);
         bottomUp = AnimationUtils.loadAnimation(this, R.anim.bottomup);
         topDown = AnimationUtils.loadAnimation(this, R.anim.topdown);
         trackRecords = new ArrayList<>();
+        //title.startAnimation(bottomUp);
+        //startBtn.startAnimation(bottomUp);
 
-        // Welcome screen animation
-        background.animate().translationY(-2020).setDuration(800).setStartDelay(400);
-        welcome_contents.animate().translationY(140).alpha(0).setDuration(800).setStartDelay(500);
-        title.startAnimation(bottomUp);
-        startBtn.startAnimation(bottomUp);
-        //title.animate().translationY(40).alpha(1).setDuration(800).setStartDelay(2000);
+
+        Log.d(TAG, "onCreate: started");
+
 
         // TODO Button action
         startBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 Intent i = new Intent(MainActivity.this, Tracking.class);
                 startActivity(i);
+                overridePendingTransition(R.anim.slide_in, R.anim.slide_out);
+
             }
         });
 
@@ -150,6 +148,7 @@ public class MainActivity extends AppCompatActivity {
             emptyLayout = (RelativeLayout) findViewById(R.id.empty_layout);
             if (emptyLayout.getVisibility() == View.INVISIBLE) {
 
+                topDown.setStartOffset(400);
                 emptyLayout.startAnimation(topDown);
                 emptyLayout.setVisibility(View.VISIBLE);
             }
