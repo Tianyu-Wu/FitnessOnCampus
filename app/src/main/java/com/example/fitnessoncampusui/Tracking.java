@@ -164,9 +164,15 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
                 Tracks.add(start);
 
                 trackBtn.setEnabled(false);
-                Geofence origin = new Geofence(closeIndex,startPOI.getLatitude(), startPOI.getLongitude(), startPOI.getName());
-                geofences.remove(origin);
 
+                for (Geofence g : geofences) {
+                    //Log.d(TAG, "onClick: geofence index: "+g.getIndex()+"; remove index: "+closeIndex);
+                    if (g.getIndex() == closeIndex) {
+                        geofences.remove(g);
+                        Log.d(TAG, "onClick: track button clicked, removed "+POIs.get(closeIndex).getName()+", number of geofences: "+geofences.size());
+                        break;
+                    }
+                }
             }
         });
     }
@@ -315,6 +321,7 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
                 // add back the origin POI to geofences
                 POI origin = currentTrack.getStartPOI();
                 geofences.add(new Geofence(POIs.indexOf(origin), origin.getLatitude(), origin.getLongitude(), origin.getName()));
+                Log.d(TAG, "onLocationChanged: end tracking, add to geofences"+origin.getName()+", number of geofences: "+geofences.size());
                 appStatus = 1;
                 trackBtn.setEnabled(true);
 
@@ -386,7 +393,7 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) !=
                 PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this,
                 Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+            ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 2);
             return false;
         } else {
             return true;
@@ -396,7 +403,7 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
     @Override
     public void onRequestPermissionsResult (int requestCode, String permissions[], int[] grantResults) {
         switch (requestCode) {
-            case 1: {
+            case 2: {
                 // if request is cancelled, the result arrays are empty
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // start the location update
@@ -527,8 +534,13 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
                     start.setStartTime(Calendar.getInstance().getTime());
                     Tracks.add(start);
                     trackBtn.setEnabled(false);
-                    Geofence origin = new Geofence(POIs.indexOf(newOrigin),newOrigin.getLatitude(), newOrigin.getLongitude(), newOrigin.getName());
-                    geofences.remove(origin);
+                    for (Geofence g : geofences) {
+                        if (g.getIndex() == closeIndex) {
+                            geofences.remove(g);
+                            Log.d(TAG, "onClick: track button clicked, removed "+POIs.get(closeIndex).getName()+", number of geofences: "+geofences.size());
+                            break;
+                        }
+                    }
 
                     myDialog.dismiss();
 
