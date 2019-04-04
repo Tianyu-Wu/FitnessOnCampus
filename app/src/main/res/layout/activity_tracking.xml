@@ -120,7 +120,7 @@
                 <TextView
                     android:layout_width="180dp"
                     android:layout_height="wrap_content"
-                    android:text="Food Market"
+                    android:text=""
                     android:textSize="65px"
                     android:id="@+id/poi_name"
                     />
@@ -144,7 +144,7 @@
                 <TextView
                     android:layout_width="180dp"
                     android:layout_height="wrap_content"
-                    android:text="15 m"
+                    android:text=""
                     android:textSize="65px"
                     android:id="@+id/distance"
                     />
@@ -168,7 +168,7 @@
                 <TextView
                     android:layout_width="180dp"
                     android:layout_height="wrap_content"
-                    android:text="153 degree"
+                    android:text=""
                     android:textSize="65px"
                     android:id="@+id/direction"
                     />
@@ -192,7 +192,7 @@
                 <TextView
                     android:layout_width="180dp"
                     android:layout_height="wrap_content"
-                    android:text="0.5 m/s"
+                    android:text=""
                     android:textSize="65px"
                     android:id="@+id/speed"
                     />
@@ -215,7 +215,7 @@
                 <TextView
                     android:layout_width="180dp"
                     android:layout_height="wrap_content"
-                    android:text="17 celsius"
+                    android:text=""
                     android:textSize="65px"
                     android:id="@+id/temperature"
                     />

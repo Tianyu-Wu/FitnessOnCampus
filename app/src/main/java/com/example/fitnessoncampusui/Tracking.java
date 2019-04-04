@@ -72,8 +72,8 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
     float temperature;
     float angle;
     private float[] Gravity = new float[3];
-    private float[] Rotation = new float[16];
-    private float[] Inclination = new float[16];
+    private float[] Rotation = new float[9];
+    private float[] Inclination = new float[9];
     private float[] Magnetic = new float[3];
     private float[] Orientation = new float[3];
     private float north_azimuth = 0f;
@@ -224,13 +224,15 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
         // with t, the low-pass filter's time-constant
         // and dT, the event delivery rate
 
-        final float alpha = 0.8f;
+        //final float alpha = 0.8f;
 
-        //final float alpha = 0.97f;
+        final float alpha = 0.97f;
 
         if (event.sensor.getType() == Sensor.TYPE_AMBIENT_TEMPERATURE) {
             // update temperature on the screen
             temperature=event.values[0];
+            tvTemperature.setText(String.format("%.2f °C", temperature));
+
         }
 
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
@@ -245,31 +247,33 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
             Magnetic[2] = alpha*Magnetic[2] + (1-alpha)*event.values[2];
         }
 
-        SensorManager.getRotationMatrix(Rotation, Inclination, Gravity, Magnetic);
-        SensorManager.getOrientation(Rotation, Orientation);
-        // get the azimuth relative to north
-        north_azimuth =  (float) Math.toDegrees(Orientation[0]);
-        // add the relative rotation from target POI to current location
-        //if (north_azimuth * angle < 0) target_azimuth = north_azimuth - (float) angle;
-        //else target_azimuth = (float) angle - north_azimuth;
+        boolean success = SensorManager.getRotationMatrix(Rotation, Inclination, Gravity, Magnetic);
+        if (success) {
+            SensorManager.getOrientation(Rotation, Orientation);
+            // get the azimuth relative to north
+            north_azimuth =  (float) Math.toDegrees(Orientation[0]);
+            // add the relative rotation from target POI to current location
+            //if (north_azimuth * angle < 0) target_azimuth = north_azimuth - (float) angle;
+            //else target_azimuth = (float) angle - north_azimuth;
 
-        north_azimuth = (360+north_azimuth)%360;
-        target_azimuth = north_azimuth - (360+angle)%360;
+            north_azimuth = (360+north_azimuth)%360;
+            target_azimuth = north_azimuth - (360+angle)%360;
 
-        // update direction on the screen
-        //direction.setText(String.format("%.4f", target_azimuth));
+            // update direction on the screen
+            //tvDirection.setText(String.format("%.2f degree", angle));
 
-        //showRotation.setText("Heading: " + Double.toString(north_azimuth) + " degrees ; " + Double.toString(target_azimuth) + " degrees to " + POIs.get(index).getName());
+            //showRotation.setText("Heading: " + Double.toString(north_azimuth) + " degrees ; " + Double.toString(target_azimuth) + " degrees to " + POIs.get(index).getName());
 
-        // TODO Rotation of the compass
-        compassRotation( -currentAzimuth, -north_azimuth, compass);
+            // TODO Rotation of the compass
+            compassRotation( -currentAzimuth, -north_azimuth, compass);
 
-        // TODO Rotation of the arrow pointing to target POI
-        compassRotation(-currentTargetAzimuth, -target_azimuth, arrow);
+            // TODO Rotation of the arrow pointing to target POI
+            compassRotation(-currentTargetAzimuth, -target_azimuth, arrow);
 
-        // set currentAzimuth to current angle
-        currentAzimuth = north_azimuth;
-        currentTargetAzimuth = target_azimuth;
+            // set currentAzimuth to current angle
+            currentAzimuth = north_azimuth;
+            currentTargetAzimuth = target_azimuth;
+        }
 
     }
 
@@ -463,18 +467,16 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
     private void updateInfo(int index, double minDistance, double speed) {
 
         tvName.setText(POIs.get(index).getName());
-        tvDistance.setText(String.format("%.2f", minDistance));
-        tvDirection.setText(String.format("%.2f", angle));
-        tvSpeed.setText(String.format("%.2f", speed));
-        tvTemperature.setText(String.format("%.2f", temperature));
-
+        tvDistance.setText(String.format("%.2f m", minDistance));
+        tvDirection.setText(String.format("%.2f degree", angle));
+        tvSpeed.setText(String.format("%.2f m/s", speed));
     }
 
     private void compassRotation(float from, float to, ImageView img) {
         // create a rotation animation (reverse turn degree degrees)
         RotateAnimation ra = new RotateAnimation(from, to, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF,0.5f);
         // how long the animation will take place
-        ra.setDuration(210);
+        ra.setDuration(500);
         // set the animation after the end of the reservation status
         ra.setFillAfter(true);
         ra.setRepeatCount(0);
@@ -511,7 +513,7 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
             final Track lastTrack = Tracks.get(Tracks.size()-1);
             origin.setText(lastTrack.getStartPOI().getName());
             destination.setText(lastTrack.getEndPOI().getName());
-            duration.setText(String.format("%.1f min",lastTrack.duration()));
+            duration.setText(String.format("%.1f min",lastTrack.duration()/60000));
 
             restart.setOnClickListener(new View.OnClickListener() {
                 @Override
