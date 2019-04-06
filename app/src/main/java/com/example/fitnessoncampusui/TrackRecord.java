@@ -6,9 +6,12 @@ public class TrackRecord {
     private int track_id;
     private String origin_name;
     private String destination_name;
-    private Double duration;
+    private Long duration;
 
-    public TrackRecord(int user_id, int track_id, String origin_name, String destination_name, Double duration) {
+    public TrackRecord() {
+    }
+
+    public TrackRecord(int user_id, int track_id, String origin_name, String destination_name, Long duration) {
         this.user_id = user_id;
         this.track_id = track_id;
         this.origin_name = origin_name;
@@ -48,11 +51,11 @@ public class TrackRecord {
         this.destination_name = destination_name;
     }
 
-    public Double getDuration() {
+    public Long getDuration() {
         return duration;
     }
 
-    public void setDuration(Double duration) {
+    public void setDuration(Long duration) {
         this.duration = duration;
     }
 }

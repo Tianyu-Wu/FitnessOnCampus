@@ -9,6 +9,9 @@ public class POI {
     private double longitude;
     private double latitude;
 
+    public POI() {
+    }
+
     public POI(String name, String id, double longitude, double latitude) {
         this.name = name;
         this.id = id;

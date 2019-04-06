@@ -88,25 +88,31 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadTracks() {
 
-        if (checkWritePermission() && Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+        if (checkReadPermission() && Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
             try {
                 String line = "";
                 File directory = Environment.getExternalStorageDirectory();
                 Log.d(TAG, "loadTracks: filepath = "+directory.getPath());
                 File file = new File(directory, TRACK_FILENAME);
 
+                Log.d(TAG, "loadTracks: track.csv exist - "+file.exists());
+
                 if (file.exists()) {
+                    Log.d(TAG, "loadTracks: start reading");
                     FileInputStream inputStream = new FileInputStream(file);
                     BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
                     int i = 0;
                     while ((line = reader.readLine()) != null) {
+                        /*
                         if (i == 0) {
                             ++i;
                             continue;
                         }
+                        */
+                        Log.d(TAG, "loadTracks: line: "+line);
                         String[] parse = line.split(",");
 
-                        TrackRecord track = new TrackRecord(Integer.valueOf(parse[0]), Integer.valueOf(parse[1]), parse[2], parse[3], Double.valueOf(parse[4])/60000);
+                        TrackRecord track = new TrackRecord(Integer.valueOf(parse[0]), Integer.valueOf(parse[1]), parse[2], parse[3], Long.valueOf(parse[4]));
                         trackRecords.add(track);
 
                         ++i;
@@ -123,14 +129,14 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private boolean checkWritePermission() {
-        Log.d(TAG, "checkWritePermission: starts");
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+    public boolean checkReadPermission() {
+        Log.d(TAG, "checkReadPermission: starts");
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1);
+                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},1);
             return false;
         } else {
-            Log.d(TAG, "checkWritePermission: permission granted");
+            Log.d(TAG, "checkReadPermission: permission granted");
             return true;
         }
     }

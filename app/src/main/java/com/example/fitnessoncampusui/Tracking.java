@@ -17,6 +17,7 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Environment;
+import android.support.annotation.TransitionRes;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
@@ -40,6 +41,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.lang.annotation.Target;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -60,10 +62,14 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
     private int appStatus = 0;
     int closeIndex = -1;
     private List<POI> POIs;
-    private List<Geofence> geofences;
+    //private List<Geofence> geofences;
     private Map<String, Double> lastDistance;
     private List<Trajectory> Trajectories;
     private List<Track> Tracks;
+    private List<TrackRecord> TrackRecords;
+    private POI TrackOrigin;
+    private Location currentLocation;
+    private double minDistantlast;
 
     private LocationManager mLocationManager;
     private SensorManager mSensorManager;
@@ -71,6 +77,7 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
 
     float temperature;
     float angle;
+    Date startTime;
     private float[] Gravity = new float[3];
     private float[] Rotation = new float[9];
     private float[] Inclination = new float[9];
@@ -111,9 +118,12 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
 
         POIs = new ArrayList<>();
         lastDistance = new HashMap<>();
-        geofences = new ArrayList<>();
+        minDistantlast = Double.MAX_VALUE;
+        //geofences = new ArrayList<>();
         Trajectories = new ArrayList<>();
         Tracks = new ArrayList<>();
+        TrackRecords = new ArrayList<>();
+        TrackOrigin = new POI();
         myDialog = new Dialog(this);
 
         // click on back return to last activity
@@ -139,6 +149,7 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
             public void onReceive(Context context, Intent intent) {
                 String name;
                 int tag;
+
                 Bundle extras = intent.getExtras();
 
                 if (extras != null) {
@@ -155,24 +166,39 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
                 Log.d(TAG, "onClick: start tracking from " + POIs.get(closeIndex));
 
                 appStatus = 2;
-                POI startPOI = POIs.get(closeIndex);
-                Track start = new Track();
+                TrackOrigin = POIs.get(closeIndex);
+                //minDistantlast = Double.MAX_VALUE;
+
+                TrackRecord start = new TrackRecord();
                 start.setUser_id(USER_ID);
-                start.setTrack_id(Tracks.size());
-                start.setStartPOI(startPOI);
-                start.setStartTime(Calendar.getInstance().getTime());
-                Tracks.add(start);
+                start.setTrack_id(TrackRecords.size());
+                start.setOrigin_name(TrackOrigin.getName());
+                startTime = Calendar.getInstance().getTime();
+                TrackRecords.add(start);
 
-                trackBtn.setEnabled(false);
+                //lastDistance.put(POIs.get(closeIndex).getName(), distance);
+                // find the next closest poi and show info
+                findClosestPOI(currentLocation);
+                /*
+                double minDistance = Double.MAX_VALUE;
+                double distance = 0;
 
-                for (Geofence g : geofences) {
-                    //Log.d(TAG, "onClick: geofence index: "+g.getIndex()+"; remove index: "+closeIndex);
-                    if (g.getIndex() == closeIndex) {
-                        geofences.remove(g);
-                        Log.d(TAG, "onClick: track button clicked, removed "+POIs.get(closeIndex).getName()+", number of geofences: "+geofences.size());
-                        break;
+                for (POI poi : POIs) {
+                    if (poi.getName() == TrackOrigin.getName()) {
+                        continue;
+                    }
+                    distance = currentLocation.distanceTo(poi.getLocation());
+                    if (distance  < minDistance) {
+                        minDistance = distance;
+                        closeIndex = POIs.indexOf(poi);
                     }
                 }
+
+                angle = currentLocation.bearingTo(POIs.get(closeIndex).getLocation());
+                updateInfo(closeIndex, minDistance, currentLocation.getSpeed());
+*/
+                trackBtn.setEnabled(false);
+
             }
         });
     }
@@ -290,16 +316,82 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
 
     @Override
     public void onLocationChanged(Location location) {
+        myDialog.dismiss();
         // for every points in the POI lists find the poi with the minimal distance to the location
         Log.d(TAG, "onLocationChanged: location updated!");
 
-        double minDistance = Double.MAX_VALUE;
+        double minDistance = findClosestPOI(location);
+        //double minDistance = Double.MAX_VALUE;
+/*
+        for (POI poi : POIs) {
 
+            double distance = location.distanceTo(poi.getLocation());
+
+            if (poi.getName() == TrackOrigin.getName() && appStatus == 2) continue;
+
+            if (distance < minDistance) {
+                minDistance = distance;
+                closeIndex = POIs.indexOf(poi);
+            }
+
+        }
+*/
+        Log.d(TAG, "onLocationChanged: closest poi "+ POIs.get(closeIndex).getName()+", distance: "+minDistance+", lastDistance: "+minDistantlast);
+
+        if (minDistance < PROXIMITY && minDistantlast > PROXIMITY) {
+            // entering poi
+            if (appStatus == 2) {
+                // end track
+                TrackRecord currentTrack = TrackRecords.get(TrackRecords.size()-1);
+                currentTrack.setDestination_name(POIs.get(closeIndex).getName());
+                Log.d(TAG, "onLocationChanged: set duration: "+(location.getTime()-startTime.getTime()));
+                currentTrack.setDuration(location.getTime()-startTime.getTime());
+                Log.d(TAG, "onLocationChanged: duration: "+currentTrack.getDuration());
+
+                appStatus = 1;
+                //minDistantlast = Double.MAX_VALUE;
+                trackBtn.setEnabled(true);
+
+                Log.d(TAG, "onLocationChanged: startime: "+startTime.getTime()+"; endtime: "+location.getTime());
+                Log.d(TAG, "onLocationChanged: currenttime"+Calendar.getInstance().getTime());
+
+
+                sendProximityIntent(currentTrack.getDestination_name(), 2, location);
+            } else {
+                // if is currently not tracking, alert ready
+                sendProximityIntent(POIs.get(closeIndex).getName(), 1, location);
+                trackBtn.setEnabled(true);
+            }
+        } else if (minDistance > PROXIMITY && minDistantlast < PROXIMITY && appStatus != 2) {
+            // leaving POI and have not started tracking, alert not found
+            Log.d(TAG, "onLocationChanged: leaving " + POIs.get(closeIndex));
+            sendProximityIntent(POIs.get(closeIndex).getName(), 3, location);
+            trackBtn.setEnabled(false);
+        } else if (minDistance > PROXIMITY && minDistantlast > PROXIMITY && appStatus == 0) {
+            // first launch the activity and not close to any pois, alert not found
+            Log.d(TAG, "onLocationChanged: not found");
+            sendProximityIntent(POIs.get(closeIndex).getName(), 0, location);
+            trackBtn.setEnabled(false);
+            appStatus = 1;
+            minDistantlast = Double.MAX_VALUE;
+        }
+
+        //minDistantlast = minDistance;
+
+
+//        Log.d(TAG, "onLocationChanged: close POI: "+POIs.get(closeIndex).getName()+", minDistance = "+minDistance+", lastDistance"+lastDistance.get(POIs.get(closeIndex).getName()));
+        currentLocation = location;
+/*
         for (Geofence g : geofences) {
 
             double distance = 0.0;
 
             distance = g.getLocation().distanceTo(location);
+
+            if (appStatus == 2 && g.getName() == TrackOrigin.getName()) {
+                Log.d(TAG, "onLocationChanged: TrackOrigin "+TrackOrigin.getName()+", skip "+g.getName());
+                continue;
+            }
 
             if (distance < minDistance) {
                 minDistance = distance;
@@ -308,47 +400,53 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
 
             Log.d(TAG, "onLocationChanged: "+g.getName()+": "+distance);
         }
-
+*/
+/*
         if (minDistance < PROXIMITY && lastDistance.get(POIs.get(closeIndex).getName()) > PROXIMITY) {
             // entering geofence
             Log.d(TAG, "onLocationChanged: entering " + POIs.get(closeIndex).getName());
             if (appStatus == 2)  {
                 // currently in tracking mode, alert end journey
                 // populate track data
-                Track currentTrack = Tracks.get(Tracks.size()-1);
-                currentTrack.setEndPOI(POIs.get(closeIndex));
-                currentTrack.setEndTime(new Date(location.getTime()));
-                // add back the origin POI to geofences
-                POI origin = currentTrack.getStartPOI();
-                geofences.add(new Geofence(POIs.indexOf(origin), origin.getLatitude(), origin.getLongitude(), origin.getName()));
-                Log.d(TAG, "onLocationChanged: end tracking, add to geofences"+origin.getName()+", number of geofences: "+geofences.size());
+
+                TrackRecord currentTrack = TrackRecords.get(TrackRecords.size()-1);
+                currentTrack.setDestination_name(POIs.get(closeIndex).getName());
+                Log.d(TAG, "onLocationChanged: set duration: "+(location.getTime()-startTime.getTime()));
+                currentTrack.setDuration(location.getTime()-startTime.getTime());
+                Log.d(TAG, "onLocationChanged: duration: "+currentTrack.getDuration());
+
                 appStatus = 1;
                 trackBtn.setEnabled(true);
 
-                Log.d(TAG, "onLocationChanged: startime: "+currentTrack.getStartTime()+"; endtime: "+currentTrack.getEndTime());
+                Log.d(TAG, "onLocationChanged: startime: "+startTime.getTime()+"; endtime: "+location.getTime());
                 Log.d(TAG, "onLocationChanged: currenttime"+Calendar.getInstance().getTime());
 
 
-                sendProximityIntent(POIs.get(closeIndex).getName(), 2);
+                sendProximityIntent(currentTrack.getDestination_name(), 2, location);
 
             }
             else {
                 // if is currently not tracking, alert ready
-                sendProximityIntent(POIs.get(closeIndex).getName(), 1);
+                sendProximityIntent(POIs.get(closeIndex).getName(), 1, location);
                 trackBtn.setEnabled(true);
             }
         } else if (minDistance > PROXIMITY && lastDistance.get(POIs.get(closeIndex).getName()) < PROXIMITY && appStatus != 2) {
             // leaving POI and have not started tracking, alert not found
             Log.d(TAG, "onLocationChanged: leaving " + POIs.get(closeIndex));
-            sendProximityIntent(POIs.get(closeIndex).getName(), 3);
+            sendProximityIntent(POIs.get(closeIndex).getName(), 3, location);
             trackBtn.setEnabled(false);
         } else if (minDistance > PROXIMITY && lastDistance.get(POIs.get(closeIndex).getName()) > PROXIMITY && appStatus == 0 ) {
             // first launch the activity and not close to any pois, alert not found
             Log.d(TAG, "onLocationChanged: not found");
-            sendProximityIntent(POIs.get(closeIndex).getName(), 0);
+            sendProximityIntent(POIs.get(closeIndex).getName(), 0, location);
             trackBtn.setEnabled(false);
             appStatus = 1;
         }
+
+        lastDistance.put(POIs.get(closeIndex).getName(), minDistance);
+*/
+
+        /*
 
         if (appStatus == 2) {
             Trajectories.add(new Trajectory(USER_ID, Tracks.size(), new Date(location.getTime()), location.getLongitude(), location.getLatitude(), location.getAltitude(), temperature));
@@ -357,8 +455,8 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
         angle = location.bearingTo(POIs.get(closeIndex).getLocation());
         lastDistance.put(POIs.get(closeIndex).getName(), minDistance);
 
-
         updateInfo(closeIndex, minDistance, location.getSpeed());
+        */
 
     }
 
@@ -429,7 +527,7 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
 
                 Log.d(TAG, "loadPOI: parsed "+parse[0]+","+parse[1]+","+parse[2]+","+parse[3]);
 
-                POI poi = new POI(parse[0], parse[1], Double.valueOf(parse[3]), Double.valueOf(parse[2]));
+                POI poi = new POI(parse[0], parse[1], Double.valueOf(parse[2]), Double.valueOf(parse[3]));
                 Log.d(TAG, "loadPOI: finished");;
                 POIs.add(poi);
                 ++i;
@@ -447,11 +545,12 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
     private void addProximityAlert() {
         try {
 
-                for (int i = 0; i < POIs.size(); i++) {
-                    POI poi = POIs.get(i);
+                for (POI poi : POIs){
+                    /*
                     Geofence g = new Geofence(i, poi.getLatitude(), poi.getLongitude(), poi.getName());
                     geofences.add(g);
                     Log.d(TAG, "addProximityAlert: added poi "+poi.getName() + "to Geofences");
+                    */
                     lastDistance.put(poi.getName(), Double.MAX_VALUE);
                 }
 
@@ -463,10 +562,12 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
         }
     }
 
-    private void sendProximityIntent(String name, int alertTag) {
+    private void sendProximityIntent(String name, int alertTag, Location location) {
         Intent i = new Intent(PROX_ALERT_INTENT);
         i.putExtra("name", name);
         i.putExtra("alertTag", alertTag);
+        i.putExtra("lat", location.getLatitude());
+        i.putExtra("lng", location.getLongitude());
 
         sendBroadcast(i);
     }
@@ -475,7 +576,7 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
 
         tvName.setText(POIs.get(index).getName());
         tvDistance.setText(String.format("%.2f m", minDistance));
-        tvDirection.setText(String.format("%.2f degree", angle));
+        tvDirection.setText(String.format("%.2f degree", (angle+360)%360));
         tvSpeed.setText(String.format("%.2f m/s", speed));
     }
 
@@ -490,7 +591,6 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
         // Start the animation
         img.startAnimation(ra);
     }
-
 
     public void showCardview(String name, int tag) {
 
@@ -517,33 +617,53 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
             TextView duration = (TextView) myDialog.findViewById(R.id.popup_duration);
             Button restart = (Button) myDialog.findViewById(R.id.btn_restart);
 
-            final Track lastTrack = Tracks.get(Tracks.size()-1);
-            origin.setText(lastTrack.getStartPOI().getName());
-            destination.setText(lastTrack.getEndPOI().getName());
-            duration.setText(String.format("%.1f min",lastTrack.duration()/60000));
+            final TrackRecord lastTrack = TrackRecords.get(TrackRecords.size()-1);
+            origin.setText(lastTrack.getOrigin_name());
+            destination.setText(lastTrack.getDestination_name());
+            double minute = lastTrack.getDuration()/6000;
+            Log.d(TAG, "showCardview: duration: "+minute);
+            duration.setText(String.format("%.1f min", minute));
+            appStatus = 1;
+            //minDistantlast = Double.MAX_VALUE;
 
             restart.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     appStatus = 2;
-                    Track start = new Track();
+                    TrackOrigin = POIs.get(closeIndex);
+                    TrackRecord start = new TrackRecord();
                     start.setUser_id(USER_ID);
-                    start.setTrack_id(Tracks.size());
-                    POI newOrigin = lastTrack.getStartPOI();
-                    start.setStartPOI(newOrigin);
-                    start.setStartTime(Calendar.getInstance().getTime());
-                    Tracks.add(start);
-                    trackBtn.setEnabled(false);
-                    for (Geofence g : geofences) {
-                        if (g.getIndex() == closeIndex) {
-                            geofences.remove(g);
-                            Log.d(TAG, "onClick: track button clicked, removed "+POIs.get(closeIndex).getName()+", number of geofences: "+geofences.size());
-                            break;
+                    start.setTrack_id(TrackRecords.size());
+                    start.setOrigin_name(TrackOrigin.getName());
+                    startTime = Calendar.getInstance().getTime();
+                    TrackRecords.add(start);
+
+                    findClosestPOI(currentLocation);
+
+                    //minDistantlast = Double.MAX_VALUE;
+
+                    // find the next closest poi and show info
+                    /*
+                    double minDistance = Double.MAX_VALUE;
+                    double distance = 0;
+
+                    for (POI poi : POIs) {
+                        if (poi.getName() == TrackOrigin.getName()) {
+                            continue;
+                        }
+                        distance = currentLocation.distanceTo(poi.getLocation());
+                        if (distance  < minDistance) {
+                            minDistance = distance;
+                            closeIndex = POIs.indexOf(poi);
                         }
                     }
 
-                    myDialog.dismiss();
+                    angle = currentLocation.bearingTo(POIs.get(closeIndex).getLocation());
+                    updateInfo(closeIndex, minDistance, currentLocation.getSpeed());
+*/
+                    trackBtn.setEnabled(false);
 
+                    myDialog.dismiss();
                 }
             });
 
@@ -562,7 +682,7 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
     private void writeToCSV() {
 
         // Saving users input to a CSV file
-        if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)){
+        if(checckWritePermission()&&Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)){
 
             File directory = Environment.getExternalStorageDirectory();
 
@@ -602,6 +722,7 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
                 FileOutputStream outputStream = new FileOutputStream(file, true);
                 PrintWriter writer = new PrintWriter(outputStream);
 
+                /*
                 for (Track tk : Tracks) {
                     Log.d(TAG, "writeToCSV: writing track "+Tracks.indexOf(tk));
                     writer.print(tk.getUser_id() + ",");
@@ -610,6 +731,16 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
                     writer.print(tk.getEndPOI().getName() + ",");
                     writer.println(tk.duration());
                 }
+                */
+                for (TrackRecord tk : TrackRecords) {
+                    Log.d(TAG, "writeToCSV: writing track "+TrackRecords.indexOf(tk));
+                    writer.print(tk.getUser_id() + ",");
+                    writer.print(tk.getTrack_id() + ",");
+                    writer.print(tk.getOrigin_name() + ",");
+                    writer.print(tk.getDestination_name() + ",");
+                    writer.println(tk.getDuration());
+                }
+
 
                 writer.close();
                 outputStream.close();
@@ -626,6 +757,63 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
             Log.e(TAG, "writeToCSV: SD card not mounted");
 
         }
+
+    }
+
+    private boolean checckWritePermission() {
+        Log.d(TAG, "checckWritePermission: starts");
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},3);
+            return false;
+        } else {
+            Log.d(TAG, "checckWritePermission: permission granted");
+            return true;
+        }
+    }
+
+    private double findClosestPOI(Location location) {
+
+        double minDistance = Double.MAX_VALUE;
+
+        double distance = 0.0;
+
+        for (POI poi : POIs) {
+
+            distance = location.distanceTo(poi.getLocation());
+
+            if (appStatus == 2 && poi.getName() == TrackOrigin.getName()) {
+                Log.d(TAG, "onLocationChanged: TrackOrigin " + TrackOrigin.getName() + ", skip " + poi.getName());
+                lastDistance.put(poi.getName(),distance);
+                continue;
+            }
+
+            if (distance < minDistance) {
+                minDistance = distance;
+                closeIndex = POIs.indexOf(poi);
+                minDistantlast = lastDistance.get(poi.getName());
+            }
+
+            lastDistance.put(poi.getName(),distance);
+
+            Log.d(TAG, "onLocationChanged: "+poi.getName()+": "+distance);
+        }
+
+        if (appStatus == 2) {
+            Trajectories.add(new Trajectory(USER_ID, Tracks.size(), new Date(location.getTime()), location.getLongitude(), location.getLatitude(), location.getAltitude(), temperature));
+        }
+
+        angle = location.bearingTo(POIs.get(closeIndex).getLocation());
+        updateInfo(closeIndex, minDistance, location.getSpeed());
+
+        target_azimuth = north_azimuth - (360+angle)%360;
+
+        compassRotation(-currentTargetAzimuth, -target_azimuth, arrow);
+
+        currentTargetAzimuth = target_azimuth;
+
+
+        return minDistance;
 
     }
 

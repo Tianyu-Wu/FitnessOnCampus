@@ -42,12 +42,12 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
 
         int index = tracks.size()-i-1;
 
-
         viewHolder.origin.setText(tracks.get(index).getOrigin_name());
         viewHolder.destination.setText(tracks.get(index).getDestination_name());
         viewHolder.trackID.setText(Integer.toString(tracks.get(index).getTrack_id()));
         viewHolder.userID.setText(Integer.toString(tracks.get(index).getUser_id()));
-        viewHolder.duration.setText(String.format("%.1f", tracks.get(index).getDuration()));
+        double minute = tracks.get(index).getDuration()/6000;
+        viewHolder.duration.setText(String.format("%.1f min", minute));
 
     }
 
