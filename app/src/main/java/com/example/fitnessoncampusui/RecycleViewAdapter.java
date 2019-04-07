@@ -13,6 +13,9 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * A recyclerview adapter for customize each entry of track with cardview layout and display corresponding entry
+ */
 public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.ViewHolder> {
 
     private static final String TAG = "RecycleViewAdapter";
@@ -36,6 +39,12 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
 
     }
 
+    /**
+     * populate the information of the track of position i
+     *
+     * @param viewHolder
+     * @param i
+     */
     @Override
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int i) {
         Log.d(TAG, "onBindViewHolder: called");
@@ -57,6 +66,9 @@ public class RecycleViewAdapter extends RecyclerView.Adapter<RecycleViewAdapter.
     }
 
 
+    /**
+     * declare the textviews in the viewholder
+     */
     public class ViewHolder extends RecyclerView.ViewHolder{
 
         TextView origin;

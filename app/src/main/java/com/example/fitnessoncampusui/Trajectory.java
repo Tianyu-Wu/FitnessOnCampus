@@ -9,6 +9,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Date;
 
+/**
+ * One trajectory point, the track_id can be used to refer to the track that the trajectory point belongs to
+ */
 public class Trajectory {
     private static final String TAG = "Trajectory";
 
@@ -20,6 +23,16 @@ public class Trajectory {
     private double altitude;
     private float temperature;
 
+    /**
+     * create a new trajectory
+     * @param user_id
+     * @param track_id
+     * @param time
+     * @param longitude
+     * @param latitude
+     * @param altitude
+     * @param temperature
+     */
     public Trajectory(int user_id, int track_id, Date time, double longitude, double latitude, double altitude, float temperature) {
         this.user_id = user_id;
         this.track_id = track_id;
@@ -86,6 +99,10 @@ public class Trajectory {
         this.temperature = temperature;
     }
 
+    /**
+     * write trajectory to external storage with the given filename
+     * @param filename
+     */
     public void writeTrajectory(String filename) {
         // Saving users input to a CSV file
         if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)){

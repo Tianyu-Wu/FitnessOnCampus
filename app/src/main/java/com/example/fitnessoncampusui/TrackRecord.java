@@ -9,6 +9,9 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 
+/**
+ * A track records the user id, track id, the origin, the destination and the duration of the track
+ */
 public class TrackRecord {
 
     private static final String TAG = "TrackRecord";
@@ -19,9 +22,20 @@ public class TrackRecord {
     private String destination_name;
     private Long duration;
 
+    /**
+     * create a empty track
+     */
     public TrackRecord() {
     }
 
+    /**
+     * create a track
+     * @param user_id
+     * @param track_id
+     * @param origin_name
+     * @param destination_name
+     * @param duration
+     */
     public TrackRecord(int user_id, int track_id, String origin_name, String destination_name, Long duration) {
         this.user_id = user_id;
         this.track_id = track_id;
@@ -70,6 +84,10 @@ public class TrackRecord {
         this.duration = duration;
     }
 
+    /**
+     * write track to external storage with filename
+     * @param filename
+     */
     public void writeTrack(String filename) {
         // Saving users input to a CSV file
         if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)){

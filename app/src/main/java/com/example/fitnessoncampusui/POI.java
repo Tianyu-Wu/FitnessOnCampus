@@ -2,6 +2,9 @@ package com.example.fitnessoncampusui;
 
 import android.location.Location;
 
+/**
+ * A point of interest with name, id and location
+ */
 public class POI {
 
     private String name;
@@ -12,6 +15,14 @@ public class POI {
     public POI() {
     }
 
+    /**
+     * create a poi
+     *
+     * @param name
+     * @param id
+     * @param longitude
+     * @param latitude
+     */
     public POI(String name, String id, double longitude, double latitude) {
         this.name = name;
         this.id = id;
@@ -19,6 +30,11 @@ public class POI {
         this.latitude = latitude;
     }
 
+    /**
+     * returns the location corresponds to the poi's latitude and longitude
+     *
+     * @return a location representing the poi
+     */
     public Location getLocation() {
         Location poi = new Location("");
         poi.setLatitude(latitude);

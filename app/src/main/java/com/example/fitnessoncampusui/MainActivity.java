@@ -31,6 +31,10 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Show previous tracks in recycler view with cardview layout
+ * the tracks are shown in a reverse sequence (i.e. the most recent one shows up at the top)
+ */
 public class MainActivity extends AppCompatActivity {
 
     TextView title;
@@ -51,17 +55,17 @@ public class MainActivity extends AppCompatActivity {
 
         title = (TextView) findViewById(R.id.title);
         startBtn = (Button) findViewById(R.id.btn_start);
+
+        // load two animations
         bottomUp = AnimationUtils.loadAnimation(this, R.anim.bottomup);
         topDown = AnimationUtils.loadAnimation(this, R.anim.topdown);
         trackRecords = new ArrayList<>();
-        //title.startAnimation(bottomUp);
-        //startBtn.startAnimation(bottomUp);
 
 
         Log.d(TAG, "onCreate: started");
 
 
-        // TODO Button action
+        // click on the button, launch next activity for tracking
         startBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -86,9 +90,12 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * Read previous tracks from tracks.csv in external storage directory
+     */
     private void loadTracks() {
 
-        if (checkReadPermission() && Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+        if (checkWritePermission() && Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
             try {
                 String line = "";
                 File directory = Environment.getExternalStorageDirectory();
@@ -126,7 +133,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public boolean checkReadPermission() {
+    /**
+     * since when write permission is granted, the read permission is automatically granted and the write permission will be used
+     * in the next activity, here we check the write permission directly
+     * @return
+     */
+    public boolean checkWritePermission() {
         Log.d(TAG, "checkReadPermission: starts");
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this,
@@ -148,6 +160,7 @@ public class MainActivity extends AppCompatActivity {
             // Show previous tracks with recyclerview and cardview
             initRecyclerView();
         } else {
+            // if there is no records in tracks.csv or if the file does not exists, show the image denoting no records
             emptyLayout = (RelativeLayout) findViewById(R.id.empty_layout);
             if (emptyLayout.getVisibility() == View.INVISIBLE) {
 

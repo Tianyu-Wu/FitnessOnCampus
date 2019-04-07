@@ -12,6 +12,9 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+/**
+ * A splash screen with ui design
+ */
 public class SplashScreen extends AppCompatActivity {
 
     private final int SPLASH_DISPLAY_LENGTH = 1000;

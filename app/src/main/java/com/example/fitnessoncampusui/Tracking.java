@@ -51,6 +51,7 @@ import java.util.Map;
 
 public class Tracking extends AppCompatActivity implements LocationListener, SensorEventListener {
 
+    // declare static variables e.g. tag, proximity, filenames
     private static final String TAG = "Tracking";
     private static final String PROX_ALERT_INTENT = "com.example.fitnessoncampusui.PROXIMITY_ALERT";
     private static final String TRACK_FILENAME = "tracks.csv";
@@ -60,36 +61,39 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
     private static final int USER_ID = 14;
 
     // declare variables
-    // represents the status of the app: 0 -- initial; 1 -- not tracking; 2 -- tracking
+    // appStatus keeps track of the status of the app: 0 -- initial (i.e. first launch); 1 -- not tracking; 2 -- tracking
     private int appStatus = 0;
-    int closeIndex = -1;
+    int closeIndex = -1; // denotes the closest POI index or the next closest POI when tracking
     private List<POI> POIs;
-    private Map<String, Double> lastDistance;
+    private Map<String, Double> lastDistance; // the distances to POI at last location
     private List<Trajectory> Trajectories;
     private List<TrackRecord> TrackRecords;
-    private POI TrackOrigin;
+    private POI TrackOrigin; // denotes the origin of current track
     private Location currentLocation;
+    // if current location enters/leaves one of the POI, store the index of the POI
     private int entering = -1;
     private int leaving = -1;
+
     private LocationManager mLocationManager;
     private SensorManager mSensorManager;
     private BroadcastReceiver mBroadcastReceiver;
 
+    // declare sensor variables
     float temperature;
-    float angle;
+    float angle = 0f; // angle bearing to the closest poi
     Date startTime;
     private float[] Gravity = new float[3];
     private float[] Rotation = new float[9];
     private float[] Inclination = new float[9];
     private float[] Magnetic = new float[3];
     private float[] Orientation = new float[3];
-    private float north_azimuth = 0f;
-    private float target_azimuth = 0f;
-    private float currentAzimuth = 0f;
+    private float north_azimuth = 0f; // azimuth to true north direction
+    private float target_azimuth = 0f; // azimuth to the closest poi
+    private float currentAzimuth = 0f; // current azimuth to north before rotating the image
     private float currentTargetAzimuth = 0f;
 
-
-    LinearLayout back;
+    // declares layout variables
+    LinearLayout back; // back "button" for going back to track records preview (last activity)
     Dialog myDialog;
     Button trackBtn;
     ImageView compass, arrow;
@@ -105,7 +109,7 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
         setContentView(R.layout.activity_tracking);
         Log.d(TAG, "onCreate: tracking");
         
-        // initiailze variables
+        // reference corresponding variables
         back = (LinearLayout) findViewById(R.id.back);
         trackBtn = (Button) findViewById(R.id.btn_track);
         compass = (ImageView) findViewById(R.id.compass_bg2);
@@ -116,6 +120,7 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
         tvSpeed = (TextView) findViewById(R.id.speed);
         tvTemperature = (TextView) findViewById(R.id.temperature);
 
+        // initialize variables
         POIs = new ArrayList<>();
         lastDistance = new HashMap<>();
         Trajectories = new ArrayList<>();
@@ -129,7 +134,7 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
             public void onClick(View v) {
                 Intent i = new Intent(Tracking.this, MainActivity.class);
                 startActivity(i);
-                overridePendingTransition(R.anim.slide_back_out, R.anim.slide_back_in);
+                overridePendingTransition(R.anim.slide_back_out, R.anim.slide_back_in); // transfer activities with slide-in, slide-out animations
             }
         });
 
@@ -137,10 +142,14 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
         loadPOI();
         Log.d(TAG, "onCreate: loaded "+POIs.size()+" number of POIs");
 
-        // Check and make sure the location permission is granted
+        // Check and make sure the location permission and write to external storage permission are granted
         checkLocationPermission();
+        checkWritePermission();
+        // get location and sensor manager
         mLocationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+
+        // a local broadcast receiver handling local alert
         mBroadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -157,26 +166,30 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
             }
         };
 
+        //
         trackBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Log.d(TAG, "onClick: TRACKING");
-                Log.d(TAG, "onClick: start tracking from " + POIs.get(entering));
+                Log.d(TAG, "onClick: start tracking from " + POIs.get(closeIndex));
 
+                // when click on the tracking button, start tracking and add current closest poi as origin
                 appStatus = 2;
-                TrackOrigin = POIs.get(entering);
+                TrackOrigin = POIs.get(closeIndex);
 
+                // start a new trackrecord, set user id, track id and origin name
                 TrackRecord start = new TrackRecord();
                 start.setUser_id(USER_ID);
                 start.setTrack_id(TrackRecords.size());
                 start.setOrigin_name(TrackOrigin.getName());
+                // record the start time of the track for calculating duration
                 startTime = Calendar.getInstance().getTime();
+                // add track to the list
                 TrackRecords.add(start);
 
                 // find the next closest poi and show info
                 findClosestPOI(currentLocation);
                 trackBtn.setEnabled(false);
-
             }
         });
     }
@@ -184,6 +197,7 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
     @Override
     protected void onStart() {
         super.onStart();
+        // initialize proximity alert and request for location updates
         addProximityAlert();
     }
 
@@ -230,13 +244,6 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
     @Override
     public void onSensorChanged(SensorEvent event) {
 
-        // alpha is calculated as t / (t + dT)
-        // with t, the low-pass filter's time-constant
-        // and dT, the event delivery rate
-
-        //final float alpha = 0.8f;
-
-        final float alpha = 0.97f;
 
         if (event.sensor.getType() == Sensor.TYPE_AMBIENT_TEMPERATURE) {
             // update temperature on the screen
@@ -244,6 +251,14 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
             tvTemperature.setText(String.format("%.2f °C", temperature));
 
         }
+
+        // alpha is calculated as t / (t + dT)
+        // with t, the low-pass filter's time-constant
+        // and dT, the event delivery rate
+
+        //final float alpha = 0.8f;
+
+        final float alpha = 0.97f;
 
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             Gravity[0] = alpha*Gravity[0] + (1-alpha)*event.values[0];
@@ -257,8 +272,10 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
             Magnetic[2] = alpha*Magnetic[2] + (1-alpha)*event.values[2];
         }
 
+        // from gravity and magnetic matrix, calculate the rotation and inclination matrix
         boolean success = SensorManager.getRotationMatrix(Rotation, Inclination, Gravity, Magnetic);
         if (success) {
+            // from rotation matrix calculate orientation of the phone
             SensorManager.getOrientation(Rotation, Orientation);
             // get the azimuth relative to north
             north_azimuth =  (float) Math.toDegrees(Orientation[0]);
@@ -269,10 +286,10 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
             // update direction on the screen
             tvDirection.setText(String.format("%.2f degree", angle));
 
-            // TODO Rotation of the compass
+            // Rotation of the compass
             compassRotation( -currentAzimuth, -north_azimuth, compass);
 
-            // TODO Rotation of the arrow pointing to target POI
+            // Rotation of the arrow pointing to target POI
             compassRotation(-currentTargetAzimuth, -target_azimuth, arrow);
 
             // set currentAzimuth to current angle
@@ -299,11 +316,16 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
         entering = -1;
         leaving = -1;
 
+        // loop through pois, find the closest poi and determine whether enter or leave one of the poi
         for (POI poi : POIs) {
 
-            if (poi.getName() == TrackOrigin.getName() && appStatus == 2) continue;
-
             double distance = location.distanceTo(poi.getLocation());
+
+            // in tracking mode, skip the origin and find the next cloest poi
+            if (poi.getName() == TrackOrigin.getName() && appStatus == 2) {
+                lastDistance.put(poi.getName(), distance);
+                continue;
+            }
 
             if (distance < minDistance) {
                 minDistance = distance;
@@ -326,6 +348,7 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
 
         }
 
+        // log the summary of entering/leaving
         if (leaving != -1 && entering != -1) {
             Log.d(TAG, "onLocationChanged: Summary: entering " + POIs.get(entering).getName() + ", leaving " + POIs.get(leaving).getName());
         } else if (entering != -1) {
@@ -335,7 +358,8 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
         } else if (entering == -1 && leaving == -1) {
             Log.d(TAG, "onLocationChanged: Summary: no leaving or entering");
         }
-        // update display information
+
+        // during tracking, append current location to trajectory and write to trajectory.csv
         if (appStatus == 2) {
             Trajectories.add(new Trajectory(USER_ID, TrackRecords.size(), new Date(location.getTime()), location.getLongitude(), location.getLatitude(), location.getAltitude(), temperature));
             if (checkWritePermission()) {
@@ -343,6 +367,7 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
             }
         }
 
+        // update display information
         angle = location.bearingTo(POIs.get(closeIndex).getLocation());
         updateInfo(closeIndex, minDistance, location.getSpeed());
 
@@ -355,25 +380,30 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
         Log.d(TAG, "onLocationChanged: closest POI: "+POIs.get(closeIndex).getName());
         // determine broadcast tag
         if (entering != -1) {
-            // entering poi, whose index is entering
+            // entering poi, store its index into entering
+            Log.d(TAG, "onLocationChanged: entering -- closeindex "+closeIndex+", entering "+entering);
             if (appStatus == 2) {
-                // end track
+                // entering another poi, end track, populate end poi, end time and duration in the previously created track record
                 Log.d(TAG, "onLocationChanged: END TRACK");
                 TrackRecord currentTrack = TrackRecords.get(TrackRecords.size()-1);
                 currentTrack.setDestination_name(POIs.get(entering).getName());
                 currentTrack.setDuration(location.getTime()-startTime.getTime());
+                // write the latest track into tracks.csv
                 if (checkWritePermission()) {
                     currentTrack.writeTrack(TRACK_FILENAME);
                 }
 
+                // set the status into non-tracking
                 appStatus = 1;
 
                 trackBtn.setEnabled(true);
 
+                // notify with a track summary
                 sendProximityIntent(currentTrack.getDestination_name(), 2);
 
             } else {
                 // if is currently not tracking, alert ready
+                appStatus = 1;
                 Log.d(TAG, "onLocationChanged: READY TO GO");
                 sendProximityIntent(POIs.get(entering).getName(), 1);
                 trackBtn.setEnabled(true);
@@ -391,7 +421,6 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
             trackBtn.setEnabled(false);
             appStatus = 1;
         }
-
 
     }
 
@@ -604,7 +633,7 @@ public class Tracking extends AppCompatActivity implements LocationListener, Sen
                 public void onClick(View v) {
                     Log.d(TAG, "onClick: TRACKING");
                     appStatus = 2;
-                    TrackOrigin = POIs.get(entering);
+                    TrackOrigin = POIs.get(closeIndex);
                     TrackRecord start = new TrackRecord();
                     start.setUser_id(USER_ID);
                     start.setTrack_id(TrackRecords.size());
