@@ -10,6 +10,8 @@ import java.io.PrintWriter;
 import java.util.Date;
 
 public class Trajectory {
+    private static final String TAG = "Trajectory";
+
     private int user_id;
     private int track_id;
     private Date time;
@@ -84,21 +86,21 @@ public class Trajectory {
         this.temperature = temperature;
     }
 
-    public void outputFiles() {
+    public void writeTrajectory(String filename) {
         // Saving users input to a CSV file
         if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)){
+
+            File directory = Environment.getExternalStorageDirectory();
+
             try{
-                Log.d("FileLog", "start writing trajectory ");
-
-                File directory = Environment.getExternalStorageDirectory();
-
-                File file = new File (directory, "trajectories.csv");
+                // write trajectoy files
+                File file = new File (directory, filename);
+                Log.d(TAG, "writeToCSV: start writing trajectories");
 
                 FileOutputStream outputStream = new FileOutputStream(file, true);
                 PrintWriter writer = new PrintWriter(outputStream);
 
-                Log.d("FileLog", "start writing trajectory");
-                writer.print(user_id + ",");
+                writer.print(user_id+ ",");
                 writer.print(track_id + ",");
                 writer.print(time + ",");
                 writer.print(longitude + ",");
@@ -108,13 +110,15 @@ public class Trajectory {
 
                 writer.close();
                 outputStream.close();
-                Log.e("FileLog", "trajectories.csv Saved :  " + file.getPath());
+                Log.d(TAG, "writeToCSV: successfully wrote trajectory point to "+file.getPath());
 
             }catch(IOException e){
-                Log.e("FileLog", "File to write trajectories");
+                Log.e(TAG, "writeToCSV: failed write to trajectories.csv");
             }
+
         }else{
-            Log.e("FileLog", "SD card not mounted");
+            Log.e(TAG, "writeToCSV: SD card not mounted");
+
         }
     }
 }

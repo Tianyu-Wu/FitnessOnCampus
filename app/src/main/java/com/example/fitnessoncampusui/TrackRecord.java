@@ -1,6 +1,17 @@
 package com.example.fitnessoncampusui;
 
+import android.os.Environment;
+import android.util.Log;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
+
+
 public class TrackRecord {
+
+    private static final String TAG = "TrackRecord";
 
     private int user_id;
     private int track_id;
@@ -57,5 +68,42 @@ public class TrackRecord {
 
     public void setDuration(Long duration) {
         this.duration = duration;
+    }
+
+    public void writeTrack(String filename) {
+        // Saving users input to a CSV file
+        if(Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)){
+
+            File directory = Environment.getExternalStorageDirectory();
+
+            try{
+                File file = new File (directory, filename);
+
+                Log.d(TAG, "writeToCSV: start writing tracks");
+
+                FileOutputStream outputStream = new FileOutputStream(file, true);
+                PrintWriter writer = new PrintWriter(outputStream);
+
+                writer.print(user_id + ",");
+                writer.print(track_id + ",");
+                writer.print(origin_name + ",");
+                writer.print(destination_name + ",");
+                writer.println(duration);
+
+                writer.close();
+                outputStream.close();
+
+                Log.d(TAG, "writeToCSV: successully write tracks to " + file.getPath());
+
+            }catch(IOException e){
+                Log.e(TAG, "writeToCSV: failed to write tracks");
+
+            }
+
+        }else{
+            Log.e(TAG, "writeToCSV: SD card not mounted");
+
+        }
+
     }
 }
